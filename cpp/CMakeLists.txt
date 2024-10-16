@@ -10,12 +10,16 @@ cmake_minimum_required (VERSION 3.10.2)
 project (bosdyn VERSION 5.1.1)
 
 # Dependencies:
-find_package(protobuf REQUIRED)
+find_package(Protobuf REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(gRPC REQUIRED)
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(GRPC REQUIRED grpc)
+pkg_check_modules(GRPCPP REQUIRED grpc++)
+find_program(GRPC_CPP_PLUGIN_LOCATION grpc_cpp_plugin REQUIRED)
 find_package(CLI11 REQUIRED)
 find_package(Threads REQUIRED)
-get_target_property(grpc_cpp_plugin_location gRPC::grpc_cpp_plugin LOCATION)
+
 include_directories(SYSTEM $<TARGET_PROPERTY:CLI11::CLI11,INTERFACE_INCLUDE_DIRECTORIES>)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS true)
@@ -24,6 +28,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS true)
 set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 option(BUILD_CHOREOGRAPHY_LIBS "Boolean to control whether choreography proto libraries are built" ON)
+option(BUILD_EXAMPLES "Boolean to control whether examples are built" OFF)
 
 IF (NOT UNIX)
     SET(BUILD_SHARED_LIBS OFF CACHE BOOL "Build using shared libraries" FORCE)
@@ -31,30 +36,27 @@ ENDIF (NOT UNIX)
 
 include(GNUInstallDirs)
 
-
 ### API protos LIBRARY ###
-set(API_protos_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build/protos/)
-# Copy protos folders to build folder so they are in a subdirectory from the cpp folder (necessary for the proto cpp files generation).
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../protos/ DESTINATION ${API_protos_PATH})
+get_filename_component(API_protos_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../protos/ ABSOLUTE)
+file(GLOB_RECURSE bosdyn_protos_files CONFIGURE_DEPENDS "${API_protos_PATH}/*.proto")
 set(protos_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/protos)
 file(MAKE_DIRECTORY ${protos_OUTPUT_DIR})
-file(GLOB_RECURSE bosdyn_protos_files CONFIGURE_DEPENDS
-    RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${API_protos_PATH}/*.proto")
-
 if (bosdyn_protos_files)
   add_library(bosdyn_api_obj OBJECT ${bosdyn_protos_files})
   set_property(TARGET bosdyn_api_obj PROPERTY POSITION_INDEPENDENT_CODE 1)
-  target_link_libraries(bosdyn_api_obj PUBLIC protobuf::libprotobuf gRPC::grpc gRPC::grpc++)
+  target_link_libraries(bosdyn_api_obj PUBLIC protobuf::libprotobuf ${GRPC_LINK_LIBRARIES} ${GRPCPP_LINK_LIBRARIES})
   target_include_directories(bosdyn_api_obj PUBLIC
+    ${GRPC_INCLUDE_DIRS} ${GRPCPP_INCLUDE_DIRS}
     $<BUILD_INTERFACE:${protos_OUTPUT_DIR}>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   )
   protobuf_generate(TARGET bosdyn_api_obj LANGUAGE cpp
-  IMPORT_DIRS ${API_protos_PATH}
-  PROTOC_OUT_DIR ${protos_OUTPUT_DIR})
+    IMPORT_DIRS ${API_protos_PATH}
+    PROTOC_OUT_DIR ${protos_OUTPUT_DIR}
+  )
   protobuf_generate(TARGET bosdyn_api_obj
     LANGUAGE grpc GENERATE_EXTENSIONS .grpc.pb.h .grpc.pb.cc
-    PLUGIN "protoc-gen-grpc=${grpc_cpp_plugin_location}"
+    PLUGIN "protoc-gen-grpc=${GRPC_CPP_PLUGIN_LOCATION}"
     IMPORT_DIRS ${API_protos_PATH}
     PROTOC_OUT_DIR ${protos_OUTPUT_DIR}
   )
@@ -93,13 +95,11 @@ endif()
 if (BUILD_CHOREOGRAPHY_LIBS)
 
 ### API choreography_protos LIBRARY ###
-set(API_choreography_protos_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build/choreography_protos/)
-# Copy choreography_protos folders to build folder so they are in a subdirectory from the cpp folder (necessary for the proto cpp files generation).
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../choreography_protos/ DESTINATION ${API_choreography_protos_PATH})
+get_filename_component(API_choreography_protos_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../choreography_protos/ ABSOLUTE)
+file(GLOB_RECURSE bosdyn_choreography_protos_files CONFIGURE_DEPENDS "${API_choreography_protos_PATH}/*.proto")
 set(choreography_protos_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/choreography_protos)
 file(MAKE_DIRECTORY ${choreography_protos_OUTPUT_DIR})
-file(GLOB_RECURSE bosdyn_choreography_protos_files CONFIGURE_DEPENDS
-    RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${API_choreography_protos_PATH}/*.proto")
+file(GLOB_RECURSE bosdyn_choreography_protos_files CONFIGURE_DEPENDS "${API_choreography_protos_PATH}/*.proto")
 
 if (bosdyn_choreography_protos_files)
   add_library(bosdyn_choreography_protos_obj OBJECT ${bosdyn_choreography_protos_files})
@@ -114,7 +114,7 @@ if (bosdyn_choreography_protos_files)
   PROTOC_OUT_DIR ${choreography_protos_OUTPUT_DIR})
   protobuf_generate(TARGET bosdyn_choreography_protos_obj
     LANGUAGE grpc GENERATE_EXTENSIONS .grpc.pb.h .grpc.pb.cc
-    PLUGIN "protoc-gen-grpc=${grpc_cpp_plugin_location}"
+    PLUGIN "protoc-gen-grpc=${GRPC_CPP_PLUGIN_LOCATION}"
     IMPORT_DIRS ${API_choreography_protos_PATH}
     PROTOC_OUT_DIR ${choreography_protos_OUTPUT_DIR}
   )
@@ -193,7 +193,11 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bosdyn
 )
 
 
+include(CMakePackageConfigHelpers)
+
 ### EXAMPLE EXECUTABLES ###
+if(BUILD_EXAMPLES)
+
 link_directories(
   ${PROTOBUF_LIB_DIR}
 )
@@ -210,6 +214,7 @@ target_compile_features(arm_manipulation_api_walk_to PUBLIC cxx_std_17)
 target_include_directories(arm_manipulation_api_walk_to PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${PROTOBUF_INCLUDE_DIR}
+  $<TARGET_PROPERTY:CLI11::CLI11,INTERFACE_INCLUDE_DIRECTORIES>
 )
 target_link_libraries(arm_manipulation_api_walk_to PUBLIC bosdyn_client_static)
 install(TARGETS arm_manipulation_api_walk_to DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -255,12 +260,12 @@ target_include_directories(spot_cam PUBLIC
 target_link_libraries(spot_cam PUBLIC bosdyn_client_static)
 install(TARGETS spot_cam DESTINATION ${CMAKE_INSTALL_BINDIR})
 # Save a version file in the project's binary directory
-include(CMakePackageConfigHelpers)
 set(VERSION_FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake")
 write_basic_package_version_file("${VERSION_FILE}"
   VERSION ${PACKAGE_VERSION}
   COMPATIBILITY AnyNewerVersion
 )
+endif()
 
 # This defines the instructions to generate a relocatable targets file at install time
 set(PROJECT_CONFIG_PATH "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
@@ -274,7 +279,6 @@ install(
 
 # Define Variables needed by package config file
 set(PACKAGE_INSTALL_PREFIX /opt/spot-cpp-sdk)
-set(DEP_INSTALL_PATH ${PACKAGE_INSTALL_PREFIX}/external)
 
 #this generates a relocatable config file for install, but it gets invoked at build time,
 #so the output has to be saved in a way that will not conflict with the export config
@@ -323,6 +327,5 @@ if (UNIX)
   set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE")
   set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
   set(CPACK_PACKAGING_INSTALL_PREFIX "${PACKAGE_INSTALL_PREFIX}")
-  set(CPACK_INSTALLED_DIRECTORIES "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/;${DEP_INSTALL_PATH}/")
   include(CPack)
 endif()
