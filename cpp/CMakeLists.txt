@@ -320,6 +320,8 @@ if (UNIX)
   set(CPACK_GENERATOR "DEB")
   set(CPACK_PACKAGE_NAME "spot-cpp-sdk")
   set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
+  set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+  set(CPACK_DEBIAN_PACKAGE_DEPENDS "libcli11-dev (>=2.1.2)")  # libcli11-dev is header-only, thus it has to be listed explicitly
   set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Boston Dynamics SDK Publisher <bd-sdk-publisher@bostondynamics.com>")
   set(CPACK_PACKAGE_VENDOR "Boston Dynamics")
   set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})

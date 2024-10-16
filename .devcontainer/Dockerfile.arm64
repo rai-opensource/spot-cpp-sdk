@@ -5,6 +5,7 @@ RUN apt-get update --fix-missing \
 	build-essential \
 	ca-certificates \
 	cmake \
+	file \
 	git \
 	libcli11-dev \
 	libeigen3-dev \
