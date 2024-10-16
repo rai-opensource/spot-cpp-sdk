@@ -5,9 +5,9 @@
 list(APPEND CMAKE_PREFIX_PATH @DEP_INSTALL_PATH@)
 # Make sure the dependencies are available first
 include(CMakeFindDependencyMacro)
-find_dependency(Protobuf CONFIG REQUIRED)
-find_dependency(Eigen3 CONFIG REQUIRED)
-find_dependency(PkgConfig CONFIG REQUIRED)
+find_dependency(Protobuf REQUIRED)
+find_dependency(Eigen3 REQUIRED)
+find_dependency(PkgConfig REQUIRED)
 pkg_check_modules(GRPC REQUIRED grpc)
 pkg_check_modules(GRPCPP REQUIRED grpc++)
 find_dependency(Threads REQUIRED)
