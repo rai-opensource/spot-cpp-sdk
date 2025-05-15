@@ -414,6 +414,62 @@ message BosdynNavigateToAnchor {
 
 }
 
+// Tell the robot to navigate to a pose in the seed frame
+message BosdynNavigateToAnchor {
+    // Name of the service to use.
+    string service_name = 1;
+    // Host machine the service is running on.
+    string host = 2;
+
+    // Desired goal pose in seed frame.
+    bosdyn.api.SE3Pose seed_tform_goal = 3;
+
+    // Preferences on how to pick the route.
+    bosdyn.api.graph_nav.RouteGenParams route_gen_params = 4;
+    // Parameters that define how to traverse and end the route.
+    bosdyn.api.graph_nav.TravelParams travel_params = 5;
+
+    // If provided, this will write the last NavigationFeedbackResponse message
+    // to a blackboard variable with this name.
+    string navigation_feedback_response_blackboard_key = 6;
+    // If provided, this will write the last NavigateToResponse message to
+    // a blackboard variable with this name.
+    string navigate_to_anchor_response_blackboard_key = 7;
+
+    // If provided, parameters from this request will be merged with the other parameters defined in
+    // the node and be used in the NavigateToAnchor RPC.
+    string navigate_to_anchor_request_blackboard_key = 8;
+
+}
+
+// Tell the robot to navigate to a pose in the seed frame
+message BosdynNavigateToAnchor {
+    // Name of the service to use.
+    string service_name = 1;
+    // Host machine the service is running on.
+    string host = 2;
+
+    // Desired goal pose in seed frame.
+    bosdyn.api.SE3Pose seed_tform_goal = 3;
+
+    // Preferences on how to pick the route.
+    bosdyn.api.graph_nav.RouteGenParams route_gen_params = 4;
+    // Parameters that define how to traverse and end the route.
+    bosdyn.api.graph_nav.TravelParams travel_params = 5;
+
+    // If provided, this will write the last NavigationFeedbackResponse message
+    // to a blackboard variable with this name.
+    string navigation_feedback_response_blackboard_key = 6;
+    // If provided, this will write the last NavigateToResponse message to
+    // a blackboard variable with this name.
+    string navigate_to_anchor_response_blackboard_key = 7;
+
+    // If provided, parameters from this request will be merged with the other parameters defined in
+    // the node and be used in the NavigateToAnchor RPC.
+    string navigate_to_anchor_request_blackboard_key = 8;
+
+}
+
 // Tell the robot to navigate a route.
 message BosdynNavigateRoute {
     // Name of the service to use.
