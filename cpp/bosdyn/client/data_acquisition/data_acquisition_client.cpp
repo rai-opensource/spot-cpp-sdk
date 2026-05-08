@@ -84,6 +84,7 @@ DataAcquisitionGetStatusResultType DataAcquisitionClient::GetStatus(
     return GetStatusAsync(request, parameters).get();
 }
 
+
 void DataAcquisitionClient::OnGetStatusComplete(
     MessagePumpCallBase* call, const ::bosdyn::api::GetStatusRequest& request,
     ::bosdyn::api::GetStatusResponse&& response, const grpc::Status& status,

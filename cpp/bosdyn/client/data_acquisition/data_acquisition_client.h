@@ -67,6 +67,7 @@ class DataAcquisitionClient : public ServiceClient {
         ::bosdyn::api::CancelAcquisitionRequest& request,
         const RPCParameters& parameters = RPCParameters());
 
+
     // Asynchronous RPC to request live data for each capability.
     std::shared_future<DataAcquisitionLiveDataResultType> GetLiveDataAsync(
         ::bosdyn::api::LiveDataRequest& request, const RPCParameters& parameters = RPCParameters());
@@ -119,6 +120,7 @@ class DataAcquisitionClient : public ServiceClient {
                             const ::bosdyn::api::LiveDataRequest& request,
                             ::bosdyn::api::LiveDataResponse&& response, const grpc::Status& status,
                             std::promise<DataAcquisitionLiveDataResultType> promise);
+
 
     std::unique_ptr<::bosdyn::api::DataAcquisitionService::StubInterface> m_stub;
 
