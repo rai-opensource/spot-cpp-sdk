@@ -319,7 +319,8 @@ if (UNIX)
   # Packaging logic
   set(CPACK_GENERATOR "DEB")
   set(CPACK_PACKAGE_NAME "spot-cpp-sdk")
-  set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
+  set(DEB_NAME_SUFFIX "" CACHE STRING "optional suffix appended to .deb filename")
+  set(CPACK_DEBIAN_FILE_NAME "${CPACK_PACKAGE_NAME}_${PROJECT_VERSION}_${CMAKE_SYSTEM_PROCESSOR}${DEB_NAME_SUFFIX}.deb")
   set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
   set(CPACK_DEBIAN_PACKAGE_DEPENDS "libcli11-dev (>=2.1.2), libgrpc++-dev (>=1.30.2), libprotobuf-dev (>=3.12.4)")  # not picked up by shlibdeps, thus listed explicitly
   set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Boston Dynamics SDK Publisher <bd-sdk-publisher@bostondynamics.com>")
